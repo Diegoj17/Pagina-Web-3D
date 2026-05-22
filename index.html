@@ -1,0 +1,2832 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ingeniería de Sistemas · UFPS Cúcuta</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<!-- THREE.JS CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  :root {
+    --cyan: #00e5ff;
+    --cyan2: #00b4d8;
+    --gold: #ffd60a;
+    --blue: #0a84ff;
+    --bg: #030a14;
+    --bg2: #050f1f;
+    --bg3: #061525;
+    --glass: rgba(0,229,255,0.04);
+    --glass2: rgba(0,229,255,0.08);
+    --border: rgba(0,229,255,0.18);
+    --border2: rgba(0,229,255,0.35);
+    --text: #c8e8ff;
+    --text2: #7ab8d8;
+    --red: #ff3a5e;
+    --green: #00ff88;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* ─── CUSTOM CURSOR ─── */
+.cursor {
+    position: fixed;
+    width: 20px; height: 20px;
+    border: 1.5px solid var(--cyan);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%,-50%);
+    transition: transform 0.1s ease, width 0.2s ease, height 0.2s ease, opacity 0.2s;
+    mix-blend-mode: screen;
+  }
+  .cursor-dot {
+    position: fixed;
+    width: 4px; height: 4px;
+    background: var(--cyan);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%,-50%);
+  }
+
+  /* ─── CANVAS FOR THREE.JS ─── */
+  #three-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ─── PARTICLES CANVAS (MANTENIDO) ─── */
+  #particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+
+  /* ─── GRID OVERLAY ─── */
+  .grid-bg {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    z-index: 0; pointer-events: none;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top: 0; width: 100%;
+    padding: 1.2rem 4rem;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(3,10,20,0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    z-index: 100;
+  }
+  .nav-logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--cyan);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+  .nav-logo span { color: var(--gold); }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a {
+    color: var(--text2);
+    text-decoration: none;
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: color 0.3s;
+    font-family: 'Orbitron', monospace;
+  }
+  .nav-links a:hover { color: var(--cyan); }
+  .nav-cta {
+    background: transparent;
+    border: 1px solid var(--cyan);
+    color: var(--cyan);
+    padding: 0.5rem 1.5rem;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+  .nav-cta:hover { background: var(--cyan); color: var(--bg); }
+
+  /* ─── SECTION BASE ─── */
+  section { position: relative; z-index: 1; }
+
+  /* ─── HERO ─── */
+  #hero {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 8rem 4rem 4rem;
+    position: relative; overflow: hidden;
+  }
+  .hero-scanner {
+    position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    animation: scan 4s linear infinite;
+    opacity: 0.7;
+  }
+  @keyframes scan {
+    0% { top: 0; }
+    100% { top: 100%; }
+  }
+  .hero-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+    max-width: 1300px;
+    width: 100%;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 0.6rem;
+    background: rgba(0,229,255,0.08);
+    border: 1px solid var(--border2);
+    padding: 0.4rem 1rem;
+    border-radius: 2px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--cyan);
+    letter-spacing: 2px;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+  }
+  .hero-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+  
+  .hero-title {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: clamp(2.2rem, 4vw, 3.8rem);
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+  }
+  .hero-title .line1 { color: #ffffff; }
+  .hero-title .line2 {
+    color: var(--cyan);
+    text-shadow: 0 0 40px rgba(0,229,255,0.5), 0 0 80px rgba(0,229,255,0.2);
+    display: block;
+  }
+  .hero-title .line3 { color: var(--gold); display: block; font-size: 0.5em; letter-spacing: 6px; margin-top: 0.5rem; }
+
+  .hero-glitch {
+    position: relative;
+    display: inline-block;
+  }
+  .hero-glitch::before, .hero-glitch::after {
+    content: attr(data-text);
+    position: absolute; top: 0; left: 0;
+    color: var(--cyan);
+  }
+  .hero-glitch::before {
+    animation: glitch1 4s infinite;
+    color: var(--red); opacity: 0.7;
+    clip-path: polygon(0 30%, 100% 30%, 100% 50%, 0 50%);
+  }
+  .hero-glitch::after {
+    animation: glitch2 4s infinite;
+    color: var(--cyan); opacity: 0.7;
+    clip-path: polygon(0 60%, 100% 60%, 100% 80%, 0 80%);
+  }
+  @keyframes glitch1 { 0%,90%,100%{transform:translate(0);} 92%{transform:translate(-3px,1px);} 94%{transform:translate(3px,-1px);} 96%{transform:translate(-2px,0);} }
+  @keyframes glitch2 { 0%,90%,100%{transform:translate(0);} 91%{transform:translate(3px,1px);} 93%{transform:translate(-3px,-1px);} 95%{transform:translate(2px,0);} }
+
+  .hero-desc {
+    color: var(--text2);
+    font-size: 1.1rem;
+    margin: 1.5rem 0 2.5rem;
+    max-width: 500px;
+    line-height: 1.8;
+    font-weight: 400;
+  }
+
+  .hero-actions { display: flex; gap: 1.2rem; align-items: center; flex-wrap: wrap; }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--cyan), var(--blue));
+    color: var(--bg);
+    border: none;
+    padding: 1rem 2.5rem;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-primary:hover { box-shadow: 0 0 30px rgba(0,229,255,0.5); transform: translateY(-2px); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border2);
+    padding: 0.95rem 2.5rem;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-secondary:hover { border-color: var(--cyan); color: var(--cyan); }
+
+  /* ─── HERO 3D VISUAL ─── */
+  .hero-visual {
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    height: 500px;
+  }
+  
+  /* 3D CANVAS IN HERO */
+  #hero-3d-canvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 500px;
+    height: 500px;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .ar-frame {
+    position: relative;
+    width: 360px; height: 360px;
+    animation: float 6s ease-in-out infinite;
+  }
+  @keyframes float { 0%,100%{transform:translateY(0) rotateY(0deg);} 50%{transform:translateY(-20px) rotateY(5deg);} }
+
+  .ar-ring {
+    position: absolute; border-radius: 50%;
+    border: 1px solid var(--border);
+    animation: spin linear infinite;
+  }
+  .ar-ring:nth-child(1) { width:100%; height:100%; animation-duration:20s; }
+  .ar-ring:nth-child(2) { width:80%; height:80%; top:10%; left:10%; border-color: rgba(0,229,255,0.3); animation-duration:15s; animation-direction:reverse; }
+  .ar-ring:nth-child(3) { width:60%; height:60%; top:20%; left:20%; border-color: rgba(255,214,10,0.2); animation-duration:10s; }
+  @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+
+  .ar-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 160px; height: 160px;
+    background: var(--glass2);
+    border: 1px solid var(--border2);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+  .ar-center-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: var(--cyan);
+    text-align: center;
+  }
+  .ar-center-num {
+    font-family: 'Orbitron', monospace;
+    font-size: 2rem;
+    font-weight: 900;
+    color: white;
+    line-height: 1;
+  }
+
+  .ar-tag {
+    position: absolute;
+    background: var(--glass2);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+    padding: 0.5rem 0.8rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--cyan);
+    white-space: nowrap;
+    animation: float 6s ease-in-out infinite;
+  }
+  .ar-tag::before {
+    content: '';
+    position: absolute;
+    width: 30px; height: 1px;
+    background: var(--cyan);
+    opacity: 0.5;
+  }
+  .ar-tag.tl { top: 5%; left: -60%; animation-delay: -1s; }
+  .ar-tag.tl::before { right: -30px; top: 50%; }
+  .ar-tag.tr { top: 10%; right: -60%; animation-delay: -3s; }
+  .ar-tag.tr::before { left: -30px; top: 50%; }
+  .ar-tag.bl { bottom: 15%; left: -65%; animation-delay: -2s; }
+  .ar-tag.bl::before { right: -30px; top: 50%; }
+  .ar-tag.br { bottom: 8%; right: -55%; animation-delay: -4s; }
+  .ar-tag.br::before { left: -30px; top: 50%; }
+
+  .ar-corners::before, .ar-corners::after {
+    content: '';
+    position: absolute;
+    width: 30px; height: 30px;
+    border-color: var(--cyan);
+    border-style: solid;
+    z-index: 2;
+  }
+  .corner-tl { position: absolute; top: 0; left: 0; border-width: 2px 0 0 2px; }
+  .corner-tr { position: absolute; top: 0; right: 0; border-width: 2px 2px 0 0; border-color: var(--cyan); }
+  .corner-bl { position: absolute; bottom: 0; left: 0; border-width: 0 0 2px 2px; border-color: var(--cyan); }
+  .corner-br { position: absolute; bottom: 0; right: 0; border-width: 0 2px 2px 0; border-color: var(--cyan); }
+  .corner-tl, .corner-tr, .corner-bl, .corner-br {
+    position: absolute; width: 20px; height: 20px;
+    border: 2px solid var(--cyan);
+  }
+  .corner-tl { top: 16%; left: 16%; border-right: none; border-bottom: none; }
+  .corner-tr { top: 16%; right: 16%; border-left: none; border-bottom: none; }
+  .corner-bl { bottom: 16%; left: 16%; border-right: none; border-top: none; }
+  .corner-br { bottom: 16%; right: 16%; border-left: none; border-top: none; }
+
+  /* ─── STATS BAR ─── */
+  .stats-bar {
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 2rem 4rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+  .stat-item { text-align: center; }
+  .stat-num {
+    font-family: 'Orbitron', monospace;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--cyan);
+    text-shadow: 0 0 20px rgba(0,229,255,0.4);
+    display: block;
+  }
+  .stat-label {
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text2);
+    font-family: 'Orbitron', monospace;
+  }
+  .stat-item + .stat-item {
+    border-left: 1px solid var(--border);
+  }
+
+  /* ─── SECTION HEADER ─── */
+  .section-header {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+  .section-tag {
+    display: inline-block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--cyan);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+  }
+  .section-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(1.8rem, 3vw, 2.8rem);
+    font-weight: 700;
+    text-transform: uppercase;
+    color: white;
+    line-height: 1.2;
+  }
+  .section-title span { color: var(--cyan); }
+  .section-line {
+    width: 60px; height: 2px;
+    background: linear-gradient(90deg, var(--cyan), transparent);
+    margin: 1.2rem auto 0;
+  }
+
+  /* ─── ABOUT ─── */
+  #about {
+    padding: 8rem 4rem;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+  }
+  .about-text p {
+    color: var(--text2);
+    margin-bottom: 1.5rem;
+    font-size: 1.05rem;
+    line-height: 1.9;
+  }
+  .info-chips {
+    display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 2rem;
+  }
+  .chip {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    padding: 0.5rem 1rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text2);
+    letter-spacing: 1px;
+  }
+  .chip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); }
+
+  .info-panel {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .info-panel::before {
+    content: '';
+    position: absolute; top: 0; left: 0;
+    width: 4px; height: 100%;
+    background: linear-gradient(to bottom, var(--cyan), transparent);
+  }
+  .info-panel::after {
+    content: attr(data-id);
+    position: absolute; bottom: 1rem; right: 1rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: rgba(0,229,255,0.15);
+    letter-spacing: 2px;
+  }
+  .info-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid rgba(0,229,255,0.08);
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-key {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text2);
+    letter-spacing: 1px;
+  }
+  .info-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    color: var(--cyan);
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+
+  /* ─── AREAS ─── */
+  #areas {
+    padding: 8rem 4rem;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  #areas .inner { max-width: 1300px; margin: 0 auto; }
+
+  .areas-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+  .area-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s ease;
+    cursor: default;
+  }
+  .area-card:hover {
+    border-color: var(--cyan);
+    background: var(--glass2);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 30px rgba(0,229,255,0.08);
+  }
+  .area-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0;
+    width: 0; height: 2px;
+    background: var(--cyan);
+    transition: width 0.4s ease;
+  }
+  .area-card:hover::before { width: 100%; }
+  .area-icon {
+    width: 58px; height: 58px;
+    background:
+      linear-gradient(145deg, rgba(255,255,255,0.16), rgba(255,255,255,0.04) 38%, rgba(0,0,0,0.1) 100%),
+      linear-gradient(145deg, rgba(0,229,255,0.18), rgba(0,180,216,0.08));
+    border: 1px solid rgba(0,229,255,0.25);
+    border-bottom-color: rgba(0,229,255,0.08);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1.2rem;
+    position: relative;
+    border-radius: 16px;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.18),
+      inset 0 -10px 18px rgba(0,0,0,0.15),
+      0 14px 22px rgba(0,0,0,0.24),
+      0 0 0 1px rgba(0,229,255,0.06);
+    transform: perspective(800px) rotateX(10deg);
+    overflow: hidden;
+  }
+  .area-icon::before,
+  .salida-icon::before,
+  .mini-icon-3d::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(145deg, rgba(255,255,255,0.2), transparent 36%, transparent 72%, rgba(255,255,255,0.08));
+    pointer-events: none;
+  }
+  .area-icon svg,
+  .salida-icon svg,
+  .mini-icon-3d svg {
+    width: 26px; height: 26px;
+    stroke: var(--cyan);
+    fill: none;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 3px 8px rgba(0,229,255,0.35));
+    position: relative;
+    z-index: 1;
+  }
+  .area-icon:hover,
+  .salida-card:hover .salida-icon,
+  .ar-card:hover .mini-icon-3d {
+    transform: perspective(800px) rotateX(6deg) translateY(-2px) scale(1.02);
+  }
+  .mini-icon-3d {
+    width: 30px; height: 30px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 30px;
+    background: linear-gradient(145deg, rgba(0,229,255,0.18), rgba(0,0,0,0.1));
+    border: 1px solid rgba(0,229,255,0.18);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 10px 18px rgba(0,0,0,0.18);
+    position: relative;
+    overflow: hidden;
+  }
+  .area-num {
+    position: absolute; top: -8px; right: -8px;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--cyan);
+  }
+  .area-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: white;
+    margin-bottom: 0.8rem;
+  }
+  .area-desc {
+    font-size: 0.95rem;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+  .area-tags {
+    display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1.2rem;
+  }
+  .area-tag-item {
+    background: rgba(0,229,255,0.06);
+    border: 1px solid rgba(0,229,255,0.15);
+    padding: 0.2rem 0.6rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--cyan);
+    letter-spacing: 1px;
+  }
+
+  /* ─── PERFIL ─── */
+  #perfil {
+    padding: 8rem 4rem;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+  .perfil-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+  }
+  .perfil-col h3 {
+    font-family: 'Orbitron', monospace;
+    font-size: 1rem;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid rgba(255,214,10,0.2);
+  }
+  .perfil-item {
+    display: flex; gap: 1rem; margin-bottom: 1.5rem;
+    align-items: flex-start;
+  }
+  .perfil-bullet {
+    width: 8px; height: 8px; min-width: 8px;
+    background: var(--cyan);
+    margin-top: 0.55rem;
+    position: relative;
+  }
+  .perfil-bullet::after {
+    content: '';
+    position: absolute;
+    top: -3px; left: -3px;
+    width: 14px; height: 14px;
+    border: 1px solid rgba(0,229,255,0.3);
+    animation: pulse 2s infinite;
+  }
+  .perfil-text {
+    font-size: 1rem;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+  .perfil-text strong { color: var(--text); font-weight: 600; }
+
+  /* ─── SALIDAS ─── */
+  #salidas {
+    padding: 8rem 4rem;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  #salidas .inner { max-width: 1300px; margin: 0 auto; }
+  .salidas-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.2rem;
+  }
+  .salida-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    padding: 1.8rem 1.5rem;
+    text-align: center;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .salida-card:hover {
+    border-color: var(--gold);
+    transform: translateY(-3px);
+  }
+  .salida-icon {
+    width: 62px; height: 62px;
+    margin-bottom: 1rem;
+    color: var(--cyan);
+    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+    border-radius: 18px;
+    background: linear-gradient(145deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04) 34%, rgba(0,0,0,0.12));
+    border: 1px solid rgba(0,229,255,0.22);
+    display: flex; align-items: center; justify-content: center;
+    margin-left: auto; margin-right: auto;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.16),
+      inset 0 -12px 18px rgba(0,0,0,0.18),
+      0 14px 24px rgba(0,0,0,0.22),
+      0 0 0 1px rgba(0,229,255,0.05);
+    transform: perspective(800px) rotateX(10deg);
+  }
+  .salida-card:hover .salida-icon {
+    border-color: var(--gold);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -12px 18px rgba(0,0,0,0.18), 0 16px 26px rgba(0,0,0,0.24), 0 0 20px rgba(255,214,10,0.12);
+  }
+  .salida-card:hover .salida-icon svg {
+    stroke: var(--gold);
+    filter: drop-shadow(0 3px 8px rgba(255,214,10,0.3));
+  }
+  .salida-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: white;
+    margin-bottom: 0.6rem;
+  }
+  .salida-desc { font-size: 0.88rem; color: var(--text2); }
+
+  /* ─── POR QUÉ ─── */
+  #porque {
+    padding: 8rem 4rem;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+  .porque-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+  .porque-card {
+    padding: 2rem;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+  .porque-card:hover {
+    border-color: var(--cyan);
+    transform: translateY(-3px);
+  }
+  .porque-num {
+    font-family: 'Orbitron', monospace;
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: rgba(0,229,255,0.07);
+    position: absolute;
+    top: 0.5rem; right: 1rem;
+    line-height: 1;
+  }
+  .porque-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--cyan);
+    margin-bottom: 0.8rem;
+  }
+  .porque-desc { font-size: 0.95rem; color: var(--text2); line-height: 1.8; }
+
+  /* ─── PROCESO ─── */
+  #proceso {
+    padding: 8rem 4rem;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  #proceso .inner { max-width: 1300px; margin: 0 auto; }
+  .proceso-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    position: relative;
+  }
+  .proceso-steps::before {
+    content: '';
+    position: absolute;
+    top: 35px; left: 15%;
+    width: 70%; height: 1px;
+    background: linear-gradient(90deg, var(--cyan), var(--gold));
+    z-index: 0;
+  }
+  .step {
+    text-align: center;
+    padding: 0 1.5rem;
+    position: relative;
+    z-index: 1;
+  }
+  .step-circle {
+    width: 70px; height: 70px;
+    border: 2px solid var(--cyan);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.5rem;
+    background: var(--bg2);
+    font-family: 'Orbitron', monospace;
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: var(--cyan);
+    position: relative;
+  }
+  .step:last-child .step-circle { border-color: var(--gold); color: var(--gold); }
+  .step-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: white;
+    margin-bottom: 0.6rem;
+  }
+  .step-desc { font-size: 0.9rem; color: var(--text2); }
+
+  /* ─── CTA ─── */
+  #cta {
+    padding: 10rem 4rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-glow {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 600px; height: 300px;
+    background: radial-gradient(ellipse, rgba(0,229,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cta-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 900;
+    text-transform: uppercase;
+    color: white;
+    margin-bottom: 1rem;
+  }
+  .cta-title span { color: var(--cyan); }
+  .cta-sub {
+    color: var(--text2);
+    font-size: 1.1rem;
+    max-width: 500px;
+    margin: 0 auto 3rem;
+  }
+  .cta-actions { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; }
+
+  /* ─── FOOTER ─── */
+  footer {
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    padding: 3rem 4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+  .footer-logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    color: var(--text2);
+    letter-spacing: 3px;
+  }
+  .footer-logo span { color: var(--cyan); }
+  .footer-links { display: flex; gap: 2rem; }
+  .footer-links a {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text2);
+    text-decoration: none;
+    letter-spacing: 1px;
+    transition: color 0.3s;
+  }
+  .footer-links a:hover { color: var(--cyan); }
+  .footer-copy {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: rgba(120,180,220,0.4);
+    letter-spacing: 1px;
+  }
+
+  /* ─── REVEAL ANIMATIONS ─── */
+
+  /* ─── AR EXPERIENCIA ─── */
+  #ar-experiencia {
+    padding: 8rem 4rem;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  #ar-experiencia .section-header { margin-bottom: 2.5rem; }
+
+  .ar-experience-wrap {
+    max-width: 1300px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  .ar-left {
+    background: rgba(0,229,255,0.03);
+    border: 1px solid rgba(0,229,255,0.14);
+    padding: 1.8rem;
+    border-radius: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .ar-left::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px; height: 100%;
+    background: linear-gradient(to bottom, var(--cyan), transparent);
+    opacity: 0.9;
+  }
+
+  .ar-kicker {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--cyan);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    opacity: 0.9;
+    margin-bottom: 0.8rem;
+  }
+
+  .ar-title {
+    font-family: 'Orbitron', monospace;
+    color: white;
+    font-size: 1.25rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.7rem;
+  }
+  .ar-title span { color: var(--cyan); }
+
+  .ar-sub {
+    color: var(--text2);
+    line-height: 1.8;
+    font-size: 1rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .ar-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.8rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .ar-status {
+    background: rgba(0,229,255,0.06);
+    border: 1px solid rgba(0,229,255,0.14);
+    padding: 0.8rem 1rem;
+    border-radius: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text2);
+    margin-bottom: 1rem;
+  }
+  .ar-status-val { color: var(--cyan); font-weight: 700; }
+
+  .ar-hints { display: grid; gap: 0.6rem; margin-top: 0.8rem; }
+  .ar-hint {
+    display: flex; align-items: center; gap: 0.6rem;
+    color: rgba(122,184,216,0.95);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+  }
+  .ar-hint .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 12px rgba(0,255,136,0.25);
+  }
+
+  .ar-cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-top: 1.2rem;
+  }
+  .ar-card {
+    border: 1px solid rgba(0,229,255,0.14);
+    background: rgba(0,229,255,0.04);
+    border-radius: 12px;
+    padding: 1rem 1.05rem;
+  }
+  .ar-card-top {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-family: 'Orbitron', monospace;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+  }
+  .ar-card-body { color: var(--text2); line-height: 1.7; font-size: 0.92rem; margin-bottom: 0.6rem; }
+  .ar-card-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .ar-card-tags::before { content: none; }
+  .ar-card-tags { font-family: 'Share Tech Mono', monospace; }
+  .ar-card-tags {
+    color: var(--cyan);
+    font-size: 0.7rem;
+  }
+  .ar-card-tags span { color: var(--cyan); }
+
+  .ar-right {
+    background: rgba(0,229,255,0.03);
+    border: 1px solid rgba(0,229,255,0.14);
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .ar-viewport {
+    height: 440px;
+    position: relative;
+    background:
+      radial-gradient(ellipse at center, rgba(0,229,255,0.10) 0%, transparent 60%),
+      linear-gradient(180deg, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.25) 100%);
+  }
+
+  .ar-viewport-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .scanline {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(0,229,255,0.7), transparent);
+    animation: arScan 2.8s linear infinite;
+    opacity: 0.8;
+  }
+  @keyframes arScan {
+    0% { transform: translateY(-10px); }
+    100% { transform: translateY(460px); }
+  }
+
+  .marker {
+    position: absolute;
+    width: 22px; height: 22px;
+    border: 2px solid var(--cyan);
+    opacity: 0.8;
+  }
+  .marker.tl { top: 18px; left: 18px; border-right: none; border-bottom: none; }
+  .marker.tr { top: 18px; right: 18px; border-left: none; border-bottom: none; }
+  .marker.bl { bottom: 18px; left: 18px; border-right: none; border-top: none; }
+  .marker.br { bottom: 18px; right: 18px; border-left: none; border-top: none; }
+
+  .ar-viewport-label {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    color: rgba(0,229,255,0.85);
+    background: rgba(0,229,255,0.06);
+    border: 1px solid rgba(0,229,255,0.14);
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+  }
+
+  .ar-foot {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 1.1rem;
+    border-top: 1px solid rgba(0,229,255,0.12);
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--text2);
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+  }
+  .ar-foot-item { opacity: 0.9; }
+
+  /* ─── REVEAL ANIMATIONS ─── */
+  .reveal {
+
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--cyan); border-radius: 2px; }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 1024px) {
+    nav { padding: 1rem 2rem; }
+    .nav-links { display: none; }
+    .hero-inner { grid-template-columns: 1fr; text-align: center; }
+    .hero-visual { display: none; }
+    .hero-desc { max-width: 100%; }
+    .stats-bar { grid-template-columns: repeat(2,1fr); padding: 2rem; }
+    .about-grid, .perfil-grid { grid-template-columns: 1fr; }
+    .areas-grid { grid-template-columns: repeat(2,1fr); }
+    .salidas-grid { grid-template-columns: repeat(2,1fr); }
+    .porque-grid { grid-template-columns: 1fr 1fr; }
+    .proceso-steps { grid-template-columns: 1fr 1fr; gap: 2rem; }
+    .proceso-steps::before { display: none; }
+    #hero, #about, #perfil, #porque, #proceso, #cta { padding: 6rem 2rem; }
+    #areas, #salidas { padding: 6rem 2rem; }
+    footer { flex-direction: column; text-align: center; padding: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<div id="particles"></div>
+<div id="three-container"></div>
+<div class="grid-bg"></div>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-dot" id="cursorDot"></div>
+
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+  <symbol id="icon-code" viewBox="0 0 24 24">
+    <polyline points="9 18 3 12 9 6" />
+    <polyline points="15 6 21 12 15 18" />
+    <line x1="14" y1="4" x2="10" y2="20" />
+  </symbol>
+  <symbol id="icon-network" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="2.5" />
+    <path d="M12 4v5" />
+    <path d="M12 15v5" />
+    <path d="M4 12h5" />
+    <path d="M15 12h5" />
+    <path d="M6.3 6.3l3.5 3.5" />
+    <path d="M14.2 14.2l3.5 3.5" />
+    <path d="M17.7 6.3l-3.5 3.5" />
+    <path d="M9.8 14.2l-3.5 3.5" />
+  </symbol>
+  <symbol id="icon-database" viewBox="0 0 24 24">
+    <ellipse cx="12" cy="5" rx="7" ry="3" />
+    <path d="M5 5v10c0 1.7 3.1 3 7 3s7-1.3 7-3V5" />
+    <path d="M5 10c0 1.7 3.1 3 7 3s7-1.3 7-3" />
+    <path d="M5 15c0 1.7 3.1 3 7 3s7-1.3 7-3" />
+  </symbol>
+  <symbol id="icon-shield" viewBox="0 0 24 24">
+    <path d="M12 3l7 3v6c0 4.7-3 8.7-7 9-4-.3-7-4.3-7-9V6l7-3z" />
+    <path d="M9 12l2 2 4-5" />
+  </symbol>
+  <symbol id="icon-chip" viewBox="0 0 24 24">
+    <rect x="6" y="6" width="12" height="12" rx="2" />
+    <rect x="9" y="9" width="6" height="6" rx="1" />
+    <path d="M8 2v4M12 2v4M16 2v4M8 18v4M12 18v4M16 18v4M2 8h4M2 12h4M2 16h4M18 8h4M18 12h4M18 16h4" />
+  </symbol>
+  <symbol id="icon-analytics" viewBox="0 0 24 24">
+    <path d="M4 19h16" />
+    <path d="M6 19V11" />
+    <path d="M11 19V7" />
+    <path d="M16 19V13" />
+    <path d="M5 10l5-4 4 3 5-6" />
+  </symbol>
+  <symbol id="icon-cloud" viewBox="0 0 24 24">
+    <path d="M7.5 18h9a4 4 0 0 0 .5-7.97A5.5 5.5 0 0 0 6 9.7 3.5 3.5 0 0 0 7.5 18z" />
+  </symbol>
+  <symbol id="icon-rocket" viewBox="0 0 24 24">
+    <path d="M14 4c2.7.2 4.8 2.3 5 5-.2 2.7-2.3 4.8-5 5l-4 4H7l1-3-2-2 4-4c.2-2.7 2.3-4.8 5-5z" />
+    <path d="M14.5 8.5a1 1 0 1 1 0-.01" />
+    <path d="M9 15l-2 2" />
+  </symbol>
+  <symbol id="icon-ai" viewBox="0 0 24 24">
+    <path d="M9 3h6" />
+    <path d="M10 3v4" />
+    <path d="M14 3v4" />
+    <rect x="7" y="7" width="10" height="10" rx="2" />
+    <path d="M8 12h2M14 12h2M12 9v2M12 14v1.5" />
+    <circle cx="12" cy="12" r="1.2" />
+  </symbol>
+  <symbol id="icon-graduation" viewBox="0 0 24 24">
+    <path d="M3 10l9-4 9 4-9 4-9-4z" />
+    <path d="M6 11v4c0 1.5 2.7 3 6 3s6-1.5 6-3v-4" />
+    <path d="M21 10v5" />
+  </symbol>
+</svg>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">UFPS <span>·</span> SYS</div>
+  <ul class="nav-links">
+    <li><a href="#about">Programa</a></li>
+    <li><a href="#areas">Áreas</a></li>
+    <li><a href="#perfil">Perfil</a></li>
+    <li><a href="#salidas">Salidas</a></li>
+    <li><a href="#ar-experiencia">AR · Fablab</a></li>
+    <li><a href="#porque">¿Por qué?</a></li>
+  </ul>
+
+<a href="https://inscripciones.ufps.edu.co/" target="_blank" rel="noopener noreferrer" class="nav-cta">Inscribirse</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-scanner"></div>
+  <div class="hero-inner">
+    <div class="hero-content reveal">
+      <div class="hero-badge">SNIES 3700 · Acreditado · Cúcuta</div>
+      <h1 class="hero-title">
+        <span class="line1">Ingeniería</span>
+        <span class="line2 hero-glitch" data-text="de Sistemas">de Sistemas</span>
+        <span class="line3">Universidad Francisco de Paula Santander</span>
+      </h1>
+      <p class="hero-desc">
+        Forma ingenieros capaces de diseñar, desarrollar e implementar soluciones tecnológicas que transformen la sociedad. Presencial · Cúcuta · Norte de Santander.
+      </p>
+      <div class="hero-actions">
+        <a href="https://ww2.ufps.edu.co/oferta-academica/ingenieria-de-sistemas" target="_blank" class="btn-primary">Conocer Programa</a>
+        <a href="#about" class="btn-secondary">Ver Detalles</a>
+      </div>
+    </div>
+    <div class="hero-visual reveal" style="transition-delay:0.2s">
+      <!-- Canvas para la esfera 3D -->
+      <canvas id="hero-3d-canvas"></canvas>
+      <div class="ar-frame">
+        <div class="ar-ring"></div>
+        <div class="ar-ring"></div>
+        <div class="ar-ring"></div>
+        <div class="corner-tl"></div>
+        <div class="corner-tr"></div>
+        <div class="corner-bl"></div>
+        <div class="corner-br"></div>
+        <div class="ar-center">
+          <div class="ar-center-text">SEMESTRES</div>
+          <div class="ar-center-num">10</div>
+          <div class="ar-center-text" style="font-size:0.55rem;margin-top:4px;color:rgba(0,229,255,0.6)">PROGRAMA</div>
+        </div>
+        <div class="ar-tag tl">SNIES // 3700</div>
+        <div class="ar-tag tr">ACREDITADO ✓</div>
+        <div class="ar-tag bl">PRESENCIAL</div>
+        <div class="ar-tag br">CÚCUTA COL</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div class="stats-bar reveal">
+  <div class="stat-item">
+    <span class="stat-num" id="s1">0</span>
+    <span class="stat-label">Años de Historia</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num" id="s2">0</span>
+    <span class="stat-label">Semestres</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num" id="s3">0</span>
+    <span class="stat-label">Créditos Académicos</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num" id="s4">0<span style="font-size:1.2rem">%</span></span>
+    <span class="stat-label">Tasa de Empleabilidad</span>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="section-header reveal">
+    <span class="section-tag">// 001 · Programa</span>
+    <h2 class="section-title">Acerca del <span>Programa</span></h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="about-grid">
+    <div class="about-text reveal">
+      <p>
+        El programa de <strong>Ingeniería de Sistemas</strong> de la Universidad Francisco de Paula Santander forma profesionales integrales con sólidas bases científicas, técnicas y humanísticas, capaces de analizar, diseñar, implementar y gestionar sistemas de información y tecnología.
+      </p>
+      <p>
+        Con una visión actualizada del ecosistema tecnológico global, el egresado está preparado para afrontar los desafíos del desarrollo de software, redes, ciberseguridad, inteligencia artificial y gestión de datos en entornos nacionales e internacionales.
+      </p>
+      <p>
+        La UFPS cuenta con infraestructura de laboratorios especializados, convenios empresariales y docentes con amplia trayectoria en la industria y la academia.
+      </p>
+      <div class="info-chips">
+        <div class="chip"><div class="chip-dot"></div>Modalidad Presencial</div>
+        <div class="chip"><div class="chip-dot"></div>Título: Ingeniero de Sistemas</div>
+        <div class="chip"><div class="chip-dot"></div>Alta Calidad</div>
+        <div class="chip"><div class="chip-dot"></div>Jornada Diurna</div>
+      </div>
+    </div>
+    <div class="info-panel reveal" data-id="INFO-SYS-001" style="transition-delay:0.15s">
+      <div class="info-row"><span class="info-key">INSTITUCIÓN</span><span class="info-val">UFPS</span></div>
+      <div class="info-row"><span class="info-key">CÓDIGO SNIES</span><span class="info-val">3700</span></div>
+      <div class="info-row"><span class="info-key">TÍTULO OTORGADO</span><span class="info-val">INGENIERO DE SISTEMAS</span></div>
+      <div class="info-row"><span class="info-key">DURACIÓN</span><span class="info-val">10 SEMESTRES</span></div>
+      <div class="info-row"><span class="info-key">MODALIDAD</span><span class="info-val">PRESENCIAL</span></div>
+      <div class="info-row"><span class="info-key">SEDE</span><span class="info-val">CÚCUTA, N. DE SANTANDER</span></div>
+      <div class="info-row"><span class="info-key">NIVEL</span><span class="info-val">UNIVERSITARIO</span></div>
+      <div class="info-row"><span class="info-key">ESTADO</span><span class="info-val" style="color:var(--green)">● ACTIVO</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ÁREAS -->
+<section id="areas">
+  <div class="inner">
+    <div class="section-header reveal">
+      <span class="section-tag">// 002 · Conocimiento</span>
+      <h2 class="section-title">Áreas de <span>Formación</span></h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="areas-grid">
+
+      <div class="area-card reveal">
+        <div class="area-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-code"></use></svg>
+          <div class="area-num">01</div>
+        </div>
+        <div class="area-title">Desarrollo de Software</div>
+        <div class="area-desc">Diseño y construcción de aplicaciones usando metodologías ágiles, patrones de diseño y buenas prácticas de ingeniería.</div>
+        <div class="area-tags">
+          <span class="area-tag-item">Java</span><span class="area-tag-item">Python</span><span class="area-tag-item">React</span><span class="area-tag-item">APIs</span>
+        </div>
+      </div>
+
+      <div class="area-card reveal" style="transition-delay:0.05s">
+        <div class="area-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-network"></use></svg>
+          <div class="area-num">02</div>
+        </div>
+        <div class="area-title">Redes y Comunicaciones</div>
+        <div class="area-desc">Administración, diseño y seguridad de infraestructuras de red, protocolos de comunicación y arquitecturas distribuidas.</div>
+        <div class="area-tags">
+          <span class="area-tag-item">TCP/IP</span><span class="area-tag-item">Cloud</span><span class="area-tag-item">Cisco</span><span class="area-tag-item">VPN</span>
+        </div>
+      </div>
+
+      <div class="area-card reveal" style="transition-delay:0.1s">
+        <div class="area-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-database"></use></svg>
+          <div class="area-num">03</div>
+        </div>
+        <div class="area-title">Bases de Datos</div>
+        <div class="area-desc">Modelado, diseño e implementación de sistemas de gestión de bases de datos relacionales y no relacionales.</div>
+        <div class="area-tags">
+          <span class="area-tag-item">SQL</span><span class="area-tag-item">NoSQL</span><span class="area-tag-item">Big Data</span><span class="area-tag-item">BI</span>
+        </div>
+      </div>
+
+      <div class="area-card reveal" style="transition-delay:0.15s">
+        <div class="area-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-shield"></use></svg>
+          <div class="area-num">04</div>
+        </div>
+        <div class="area-title">Ciberseguridad</div>
+        <div class="area-desc">Protección de sistemas, detección de vulnerabilidades, criptografía y gestión de riesgos en entornos digitales.</div>
+        <div class="area-tags">
+          <span class="area-tag-item">Ethical Hacking</span><span class="area-tag-item">ISO 27001</span><span class="area-tag-item">Cifrado</span>
+        </div>
+      </div>
+
+      <div class="area-card reveal" style="transition-delay:0.2s">
+        <div class="area-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-ai"></use></svg>
+          <div class="area-num">05</div>
+        </div>
+        <div class="area-title">Inteligencia Artificial</div>
+        <div class="area-desc">Machine learning, redes neuronales, procesamiento de lenguaje natural y sistemas expertos aplicados a problemas reales.</div>
+        <div class="area-tags">
+          <span class="area-tag-item">ML</span><span class="area-tag-item">Deep Learning</span><span class="area-tag-item">NLP</span>
+        </div>
+      </div>
+
+      <div class="area-card reveal" style="transition-delay:0.25s">
+        <div class="area-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-chip"></use></svg>
+          <div class="area-num">06</div>
+        </div>
+        <div class="area-title">Gestión de TI</div>
+        <div class="area-desc">Dirección de proyectos tecnológicos, auditoría de sistemas, marcos de gobernanza de TI y transformación digital empresarial.</div>
+        <div class="area-tags">
+          <span class="area-tag-item">ITIL</span><span class="area-tag-item">COBIT</span><span class="area-tag-item">Scrum</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PERFIL -->
+<section id="perfil">
+  <div class="section-header reveal">
+    <span class="section-tag">// 003 · Competencias</span>
+    <h2 class="section-title">Perfil del <span>Egresado</span></h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="perfil-grid">
+    <div class="perfil-col reveal">
+      <h3>Perfil de Ingreso</h3>
+      <div class="perfil-item">
+        <div class="perfil-bullet"></div>
+        <div class="perfil-text"><strong>Aptitud matemática y lógica</strong> — capacidad para resolver problemas con pensamiento abstracto y algorítmico.</div>
+      </div>
+      <div class="perfil-item">
+        <div class="perfil-bullet"></div>
+        <div class="perfil-text"><strong>Curiosidad tecnológica</strong> — interés genuino en el funcionamiento de sistemas computacionales y redes.</div>
+      </div>
+      <div class="perfil-item">
+        <div class="perfil-bullet"></div>
+        <div class="perfil-text"><strong>Habilidades comunicativas</strong> — capacidad de trabajo en equipo y expresión oral/escrita clara.</div>
+      </div>
+      <div class="perfil-item">
+        <div class="perfil-bullet"></div>
+        <div class="perfil-text"><strong>Proactividad e iniciativa</strong> — disposición para aprender de forma autónoma y emprender proyectos innovadores.</div>
+      </div>
+    </div>
+    <div class="perfil-col reveal" style="transition-delay:0.15s">
+      <h3>Perfil de Egreso</h3>
+      <div class="perfil-item">
+        <div class="perfil-bullet"></div>
+        <div class="perfil-text"><strong>Diseñar y desarrollar sistemas de software</strong> que respondan a necesidades empresariales con calidad y eficiencia.</div>
+      </div>
+      <div class="perfil-item">
+        <div class="perfil-bullet"></div>
+        <div class="perfil-text"><strong>Gestionar infraestructuras tecnológicas</strong> incluyendo redes, servidores, bases de datos y servicios en la nube.</div>
+      </div>
+      <div class="perfil-item">
+        <div class="perfil-bullet"></div>
+        <div class="perfil-text"><strong>Aplicar inteligencia artificial y análisis de datos</strong> para generar valor en organizaciones de cualquier sector.</div>
+      </div>
+      <div class="perfil-item">
+        <div class="perfil-bullet"></div>
+        <div class="perfil-text"><strong>Liderar proyectos tecnológicos</strong> con visión estratégica, ética profesional y responsabilidad social.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SALIDAS PROFESIONALES -->
+<section id="salidas">
+  <div class="inner">
+    <div class="section-header reveal">
+      <span class="section-tag">// 004 · Carrera</span>
+      <h2 class="section-title">Salidas <span>Profesionales</span></h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="salidas-grid">
+      <div class="salida-card reveal">
+        <div class="salida-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-code"></use></svg></div>
+        <div class="salida-title">Desarrollador de Software</div>
+        <div class="salida-desc">Frontend, backend, fullstack, móvil o videojuegos.</div>
+      </div>
+      <div class="salida-card reveal" style="transition-delay:0.05s">
+        <div class="salida-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-database"></use></svg></div>
+        <div class="salida-title">Arquitecto de Datos</div>
+        <div class="salida-desc">Diseño de pipelines, Data Warehouses y sistemas analíticos.</div>
+      </div>
+      <div class="salida-card reveal" style="transition-delay:0.1s">
+        <div class="salida-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-shield"></use></svg></div>
+        <div class="salida-title">Especialista en Seguridad</div>
+        <div class="salida-desc">Pentesting, auditoría y gestión de riesgos digitales.</div>
+      </div>
+      <div class="salida-card reveal" style="transition-delay:0.15s">
+        <div class="salida-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-cloud"></use></svg></div>
+        <div class="salida-title">Cloud Architect</div>
+        <div class="salida-desc">Diseño y gestión de infraestructuras en AWS, Azure, GCP.</div>
+      </div>
+      <div class="salida-card reveal" style="transition-delay:0.2s">
+        <div class="salida-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-ai"></use></svg></div>
+        <div class="salida-title">Ingeniero de IA / ML</div>
+        <div class="salida-desc">Modelos predictivos, automatización y sistemas inteligentes.</div>
+      </div>
+      <div class="salida-card reveal" style="transition-delay:0.25s">
+        <div class="salida-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-analytics"></use></svg></div>
+        <div class="salida-title">Consultor de TI</div>
+        <div class="salida-desc">Asesoría en transformación digital y estrategia tecnológica.</div>
+      </div>
+      <div class="salida-card reveal" style="transition-delay:0.3s">
+        <div class="salida-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-rocket"></use></svg></div>
+        <div class="salida-title">Emprendedor Tech</div>
+        <div class="salida-desc">Fundador de startups tecnológicas e innovación empresarial.</div>
+      </div>
+      <div class="salida-card reveal" style="transition-delay:0.35s">
+        <div class="salida-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-graduation"></use></svg></div>
+        <div class="salida-title">Docente / Investigador</div>
+        <div class="salida-desc">Academia, grupos de investigación y publicaciones científicas.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ¿POR QUÉ? -->
+<section id="porque">
+  <div class="section-header reveal">
+    <span class="section-tag">// 005 · Diferencial</span>
+    <h2 class="section-title">¿Por qué elegir la <span>UFPS</span>?</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="porque-grid">
+    <div class="porque-card reveal">
+      <div class="porque-num">01</div>
+      <div class="porque-title">Acreditación de Alta Calidad</div>
+      <div class="porque-desc">El programa cuenta con reconocimiento del Ministerio de Educación Nacional, garantizando estándares académicos de excelencia a nivel nacional.</div>
+    </div>
+    <div class="porque-card reveal" style="transition-delay:0.05s">
+      <div class="porque-num">02</div>
+      <div class="porque-title">Laboratorios Especializados</div>
+      <div class="porque-desc">Infraestructura de última generación: laboratorios de redes, desarrollo de software, ciberseguridad e inteligencia artificial.</div>
+    </div>
+    <div class="porque-card reveal" style="transition-delay:0.1s">
+      <div class="porque-num">03</div>
+      <div class="porque-title">Docentes Expertos</div>
+      <div class="porque-desc">Planta docente con formación avanzada (maestrías y doctorados), experiencia industrial y participación en investigación aplicada.</div>
+    </div>
+    <div class="porque-card reveal" style="transition-delay:0.15s">
+      <div class="porque-num">04</div>
+      <div class="porque-title">Vinculación Empresarial</div>
+      <div class="porque-desc">Convenios con empresas del sector tecnológico de la región y el país para prácticas, pasantías e inserción laboral inmediata.</div>
+    </div>
+    <div class="porque-card reveal" style="transition-delay:0.2s">
+      <div class="porque-num">05</div>
+      <div class="porque-title">Investigación y Semilleros</div>
+      <div class="porque-desc">Grupos de investigación categorizados por Minciencias y semilleros activos donde los estudiantes participan desde primeros semestres.</div>
+    </div>
+    <div class="porque-card reveal" style="transition-delay:0.25s">
+      <div class="porque-num">06</div>
+      <div class="porque-title">Impacto Regional</div>
+      <div class="porque-desc">La única institución pública de educación superior de Cúcuta, con arraigo en la frontera colombo-venezolana y visión de transformación social.</div>
+    </div>
+  </div>
+</section>
+
+<!-- AR (CAMARA REAL + TOUR 3D) -->
+<section id="ar-experiencia">
+  <div class="section-header reveal">
+    <span class="section-tag">// 006 · Experiencia AR</span>
+    <h2 class="section-title">Fablab <span>en Realidad</span></h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="ar-experience-wrap reveal">
+    <div class="ar-left">
+      <div class="ar-kicker">Activa la demo</div>
+      <h3 class="ar-title">Proyecto Maker · Ingeniería de Sistemas</h3>
+      <p class="ar-sub">
+        Aquí simulamos una experiencia tipo AR: sobre el programa ves cómo se “aterriza” el conocimiento en
+        prototipos reales del Fablab (electrónica, impresión 3D y automatización).
+      </p>
+
+      <div class="ar-actions">
+        <button id="arBtn" class="btn-primary" type="button">Activar Experiencia AR</button>
+        <button id="arStopBtn" class="btn-secondary" type="button" style="display:none;">Detener</button>
+      </div>
+
+      <div class="ar-status" id="arStatus" role="status">
+        Estado: <span class="ar-status-val">Listo (sin activar)</span>
+      </div>
+
+      <div class="ar-hints">
+        <div class="ar-hint"><span class="dot"></span> En navegadores sin WebXR, verás un fallback 3D.</div>
+        <div class="ar-hint"><span class="dot"></span> Ideal probar en móvil si soporta AR.</div>
+      </div>
+
+      <div class="ar-cards">
+        <div class="ar-card">
+            <div class="ar-card-top"><span class="mini-icon-3d"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-network"></use></svg></span>Redes + IoT</div>
+          <div class="ar-card-body">Sensores conectados, lectura de datos y monitoreo (base para proyectos tipo IoT).</div>
+          <div class="ar-card-tags">TCP/IP · Cloud · Automatización</div>
+        </div>
+        <div class="ar-card">
+            <div class="ar-card-top"><span class="mini-icon-3d"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-ai"></use></svg></span>Software + IA</div>
+          <div class="ar-card-body">Procesamiento de datos y control inteligente del prototipo (visualización y analítica).</div>
+          <div class="ar-card-tags">Big Data · ML · APIs</div>
+        </div>
+        <div class="ar-card">
+            <div class="ar-card-top"><span class="mini-icon-3d"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-chip"></use></svg></span>Impresión 3D</div>
+          <div class="ar-card-body">Estructuras, carcasas y piezas para dispositivos del Fablab, conectadas a la electrónica.</div>
+          <div class="ar-card-tags">Prototipado · CNC/3D · Diseño</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ar-right">
+      <div class="ar-viewport">
+        <div class="ar-viewport-overlay" aria-hidden="true">
+          <div class="scanline"></div>
+          <div class="marker tl"></div>
+          <div class="marker tr"></div>
+          <div class="marker bl"></div>
+          <div class="marker br"></div>
+          <div class="ar-viewport-label">FQ-AR · DEMO</div>
+        </div>
+<canvas id="arCanvas" aria-label="Demo 3D" style="width:100%;height:100%;display:block;"></canvas>
+      </div>
+
+      <div class="ar-foot">
+        <span class="ar-foot-item">⌁ Control: mouse / touch</span>
+        <span class="ar-foot-item">◆ Formato: 3D + UI AR</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="cta-glow"></div>
+  <h2 class="cta-title reveal">Tu Futuro<br><span>Empieza Aquí</span></h2>
+  <p class="cta-sub reveal" style="transition-delay:0.1s">Únete a la comunidad de ingenieros que están transformando el futuro tecnológico de Colombia y la región.</p>
+  <div class="cta-actions reveal" style="transition-delay:0.2s">
+    <a href="https://ww2.ufps.edu.co/oferta-academica/ingenieria-de-sistemas" target="_blank" class="btn-primary">Ver Programa Oficial</a>
+    <a href="https://uvirtual.cloud.ufps.edu.co/" target="_blank" class="btn-secondary">Portal UFPS</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">UFPS <span>·</span> INGENIERÍA DE SISTEMAS</div>
+  <div class="footer-links">
+    <a href="https://ww2.ufps.edu.co" target="_blank">ufps.edu.co</a>
+    <a href="https://ww2.ufps.edu.co/oferta-academica/ingenieria-de-sistemas" target="_blank">Programa</a>
+  </div>
+  <div class="footer-copy">CÚCUTA · NORTE DE SANTANDER · COLOMBIA</div>
+</footer>
+
+<script>
+// ─── CURSOR ───
+const cursor = document.getElementById('cursor');
+const dot = document.getElementById('cursorDot');
+document.addEventListener('mousemove', e => {
+  cursor.style.left = e.clientX + 'px';
+  cursor.style.top = e.clientY + 'px';
+  dot.style.left = e.clientX + 'px';
+  dot.style.top = e.clientY + 'px';
+});
+document.querySelectorAll('a, button').forEach(el => {
+  el.addEventListener('mouseenter', () => { cursor.style.width = '40px'; cursor.style.height = '40px'; });
+  el.addEventListener('mouseleave', () => { cursor.style.width = '20px'; cursor.style.height = '20px'; });
+});
+
+// ─── PARTICLES ───
+const particlesContainer = document.getElementById('particles');
+const canvas2D = document.createElement('canvas');
+canvas2D.id = 'particleCanvas';
+canvas2D.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;';
+particlesContainer.appendChild(canvas2D);
+const ctx2D = canvas2D.getContext('2d');
+
+function resize2D() { canvas2D.width = window.innerWidth; canvas2D.height = window.innerHeight; }
+resize2D();
+window.addEventListener('resize', resize2D);
+
+const pts = Array.from({length: 80}, () => ({
+  x: Math.random() * canvas2D.width,
+  y: Math.random() * canvas2D.height,
+  vx: (Math.random() - 0.5) * 0.3,
+  vy: (Math.random() - 0.5) * 0.3,
+  r: Math.random() * 1.5 + 0.5,
+  o: Math.random() * 0.4 + 0.1
+}));
+
+function drawParticles() {
+  ctx2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
+  pts.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = canvas2D.width;
+    if (p.x > canvas2D.width) p.x = 0;
+    if (p.y < 0) p.y = canvas2D.height;
+    if (p.y > canvas2D.height) p.y = 0;
+    ctx2D.beginPath();
+    ctx2D.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx2D.fillStyle = `rgba(0,229,255,${p.o})`;
+    ctx2D.fill();
+  });
+  for (let i = 0; i < pts.length; i++) {
+    for (let j = i+1; j < pts.length; j++) {
+      const dx = pts[i].x - pts[j].x;
+      const dy = pts[i].y - pts[j].y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < 120) {
+        ctx2D.beginPath();
+        ctx2D.moveTo(pts[i].x, pts[i].y);
+        ctx2D.lineTo(pts[j].x, pts[j].y);
+        ctx2D.strokeStyle = `rgba(0,229,255,${0.08 * (1 - dist/120)})`;
+        ctx2D.lineWidth = 0.5;
+        ctx2D.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(drawParticles);
+}
+drawParticles();
+
+// ─── THREE.JS 3D SCENE ───
+(function() {
+  const threeContainer = document.getElementById('three-container');
+  
+  // Scene setup
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.z = 5;
+  
+  const renderer = new THREE.WebGLRenderer({ 
+    alpha: true,
+    antialias: true 
+  });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  threeContainer.appendChild(renderer.domElement);
+  
+  // Create floating geometric shapes
+  const group = new THREE.Group();
+  scene.add(group);
+  
+  // Torus knot (main shape)
+  const knotGeometry = new THREE.TorusKnotGeometry(0.8, 0.15, 100, 16);
+  const knotMaterial = new THREE.MeshBasicMaterial({ 
+    color: 0x00e5ff,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.15
+  });
+  const torusKnot = new THREE.Mesh(knotGeometry, knotMaterial);
+  torusKnot.position.set(3, 1, -2);
+  group.add(torusKnot);
+  
+  // Icosahedron
+  const icosaGeometry = new THREE.IcosahedronGeometry(0.6, 0);
+  const icosaMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffd60a,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.1
+  });
+  const icosa = new THREE.Mesh(icosaGeometry, icosaMaterial);
+  icosa.position.set(-3, -2, -1);
+  group.add(icosa);
+  
+  // Dodecahedron
+  const dodecaGeometry = new THREE.DodecahedronGeometry(0.5);
+  const dodecaMaterial = new THREE.MeshBasicMaterial({
+    color: 0x0a84ff,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.08
+  });
+  const dodeca = new THREE.Mesh(dodecaGeometry, dodecaMaterial);
+  dodeca.position.set(2, -2.5, -3);
+  group.add(dodeca);
+  
+  // Octahedron
+  const octaGeometry = new THREE.OctahedronGeometry(0.4);
+  const octaMaterial = new THREE.MeshBasicMaterial({
+    color: 0x00b4d8,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.12
+  });
+  const octa = new THREE.Mesh(octaGeometry, octaMaterial);
+  octa.position.set(-2, 2.5, -2);
+  group.add(octa);
+  
+  // Particles in 3D
+  const particlesGeometry = new THREE.BufferGeometry();
+  const particlesCount = 200;
+  const posArray = new Float32Array(particlesCount * 3);
+  
+  for(let i = 0; i < particlesCount * 3; i++) {
+    posArray[i] = (Math.random() - 0.5) * 15;
+  }
+  
+  particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+  
+  const particlesMaterial = new THREE.PointsMaterial({
+    size: 0.02,
+    color: 0x00e5ff,
+    transparent: true,
+    opacity: 0.3,
+    blending: THREE.AdditiveBlending
+  });
+  
+  const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+  scene.add(particlesMesh);
+  
+  // Stars background
+  const starsGeometry = new THREE.BufferGeometry();
+  const starsCount = 500;
+  const starsArray = new Float32Array(starsCount * 3);
+  
+  for(let i = 0; i < starsCount * 3; i++) {
+    starsArray[i] = (Math.random() - 0.5) * 20;
+  }
+  
+  starsGeometry.setAttribute('position', new THREE.BufferAttribute(starsArray, 3));
+  
+  const starsMaterial = new THREE.PointsMaterial({
+    size: 0.015,
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.4
+  });
+  
+  const stars = new THREE.Points(starsGeometry, starsMaterial);
+  scene.add(stars);
+  
+  // Mouse interaction
+  let mouseX = 0;
+  let mouseY = 0;
+  let targetX = 0;
+  let targetY = 0;
+  
+  document.addEventListener('mousemove', (event) => {
+    mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+    mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+  });
+  
+  // Animation loop
+  function animate() {
+    requestAnimationFrame(animate);
+    
+    // Smooth mouse follow
+    targetX += (mouseX - targetX) * 0.05;
+    targetY += (mouseY - targetY) * 0.05;
+    
+    // Rotate main group based on mouse
+    group.rotation.x += 0.001;
+    group.rotation.y += 0.002;
+    
+    // Individual rotations
+    torusKnot.rotation.x += 0.003;
+    torusKnot.rotation.y += 0.005;
+    
+    icosa.rotation.x += 0.004;
+    icosa.rotation.y -= 0.003;
+    
+    dodeca.rotation.z += 0.002;
+    
+    octa.rotation.y += 0.003;
+    octa.rotation.x -= 0.002;
+    
+    // Rotate particles
+    particlesMesh.rotation.x += 0.0001;
+    particlesMesh.rotation.y += 0.0002;
+    
+    // Rotate stars very slowly
+    stars.rotation.y += 0.00005;
+    
+    // Move camera slightly based on mouse
+    camera.position.x += (targetX * 0.5 - camera.position.x) * 0.05;
+    camera.position.y += (targetY * 0.3 - camera.position.y) * 0.05;
+    camera.lookAt(scene.position);
+    
+    renderer.render(scene, camera);
+  }
+  
+  animate();
+  
+  // Handle resize
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+
+// ─── HERO 3D SPHERE ───
+(function() {
+  const heroCanvas = document.getElementById('hero-3d-canvas');
+  if (!heroCanvas) return;
+  
+  const heroScene = new THREE.Scene();
+  const heroCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+  heroCamera.position.z = 5;
+  
+  const heroRenderer = new THREE.WebGLRenderer({ 
+    canvas: heroCanvas,
+    alpha: true,
+    antialias: true 
+  });
+  heroRenderer.setSize(500, 500);
+  heroRenderer.setPixelRatio(1.5);
+  
+  // Create sphere with wireframe
+  const sphereGeometry = new THREE.SphereGeometry(1.8, 32, 32);
+  const sphereMaterial = new THREE.MeshBasicMaterial({
+    color: 0x00e5ff,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.2
+  });
+  const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+  heroScene.add(sphere);
+  
+  // Inner sphere
+  const innerSphereGeometry = new THREE.SphereGeometry(1.2, 16, 16);
+  const innerSphereMaterial = new THREE.MeshBasicMaterial({
+    color: 0x00e5ff,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.1
+  });
+  const innerSphere = new THREE.Mesh(innerSphereGeometry, innerSphereMaterial);
+  heroScene.add(innerSphere);
+  
+  // Rings around sphere
+  const ringGeometry = new THREE.TorusGeometry(2, 0.02, 16, 100);
+  const ringMaterial = new THREE.MeshBasicMaterial({
+    color: 0x00e5ff,
+    transparent: true,
+    opacity: 0.4
+  });
+  const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+  ring.rotation.x = Math.PI / 2;
+  heroScene.add(ring);
+  
+  const ring2Geometry = new THREE.TorusGeometry(2.2, 0.015, 16, 100);
+  const ring2Material = new THREE.MeshBasicMaterial({
+    color: 0xffd60a,
+    transparent: true,
+    opacity: 0.3
+  });
+  const ring2 = new THREE.Mesh(ring2Geometry, ring2Material);
+  ring2.rotation.x = Math.PI / 3;
+  ring2.rotation.y = Math.PI / 4;
+  heroScene.add(ring2);
+  
+  // Floating particles around sphere
+  const orbitParticlesGeometry = new THREE.BufferGeometry();
+  const orbitCount = 100;
+  const orbitArray = new Float32Array(orbitCount * 3);
+  
+  for(let i = 0; i < orbitCount * 3; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 2 + Math.random() * 0.5;
+    orbitArray[i * 3] = Math.cos(angle) * radius;
+    orbitArray[i * 3 + 1] = (Math.random() - 0.5) * 3;
+    orbitArray[i * 3 + 2] = Math.sin(angle) * radius;
+  }
+  
+  orbitParticlesGeometry.setAttribute('position', new THREE.BufferAttribute(orbitArray, 3));
+  
+  const orbitMaterial = new THREE.PointsMaterial({
+    size: 0.04,
+    color: 0x00e5ff,
+    transparent: true,
+    opacity: 0.5,
+    blending: THREE.AdditiveBlending
+  });
+  
+  const orbitParticles = new THREE.Points(orbitParticlesGeometry, orbitMaterial);
+  heroScene.add(orbitParticles);
+  
+  function heroAnimate() {
+    requestAnimationFrame(heroAnimate);
+    
+    sphere.rotation.x += 0.002;
+    sphere.rotation.y += 0.003;
+    
+    innerSphere.rotation.x -= 0.003;
+    innerSphere.rotation.y -= 0.002;
+    
+    ring.rotation.z += 0.005;
+    ring2.rotation.z -= 0.003;
+    ring2.rotation.x += 0.002;
+    
+    orbitParticles.rotation.y += 0.002;
+    
+    heroRenderer.render(heroScene, heroCamera);
+  }
+  
+  heroAnimate();
+  
+  // Resize handler for hero canvas
+  const heroObserver = new ResizeObserver(() => {
+    const size = Math.min(500, window.innerWidth * 0.4);
+    heroRenderer.setSize(size, size);
+  });
+  heroObserver.observe(heroCanvas.parentElement);
+})();
+
+// ─── REVEAL ON SCROLL ───
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+reveals.forEach(el => observer.observe(el));
+
+// ─── COUNTER ANIMATION ───
+function animateCount(el, target, suffix = '', duration = 2000) {
+  const start = performance.now();
+  const update = (time) => {
+    const progress = Math.min((time - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const cur = Math.round(ease * target);
+    el.innerHTML = cur + suffix;
+    if (progress < 1) requestAnimationFrame(update);
+  };
+  requestAnimationFrame(update);
+}
+
+const statsBar = document.querySelector('.stats-bar');
+let counted = false;
+const statsObserver = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting && !counted) {
+    counted = true;
+    animateCount(document.getElementById('s1'), 50, '+');
+    animateCount(document.getElementById('s2'), 10);
+    animateCount(document.getElementById('s3'), 165);
+    document.getElementById('s4').innerHTML = '0<span style="font-size:1.2rem">%</span>';
+    setTimeout(() => {
+      const el = document.getElementById('s4');
+      animateCount({innerHTML:''}, 0);
+      let v = 0; const t = setInterval(() => {
+        v++;
+        el.innerHTML = v + '<span style="font-size:1.2rem">%</span>';
+        if (v >= 92) clearInterval(t);
+      }, 20);
+    }, 0);
+  }
+}, {threshold: 0.5});
+statsObserver.observe(statsBar);
+
+// ─── FABLAB 3D INMERSIVO ───
+(function initFablab3D() {
+  const arCanvas = document.getElementById('arCanvas');
+  const arBtn = document.getElementById('arBtn');
+  const arStopBtn = document.getElementById('arStopBtn');
+  const arStatus = document.getElementById('arStatus');
+  const arStatusVal = arStatus ? arStatus.querySelector('.ar-status-val') : null;
+
+  if (!arCanvas) return;
+
+  let running = false;
+  let animationId = null;
+  let renderer, scene, camera;
+  let fablabGroup, printerGroup, laserGroup, cncGroup, robotArm;
+  let particles, grid;
+  let mouseX = 0, mouseY = 0;
+  let targetRotX = 0, targetRotY = 0;
+
+  function setStatus(text) {
+    if (arStatusVal) arStatusVal.textContent = text;
+  }
+
+  function buildFablabScene() {
+    scene = new THREE.Scene();
+    
+    // (Opcional) dejar environment nulo para no depender de HDR externas
+    scene.environment = null;
+    
+    // Fondo degradado
+    scene.background = new THREE.Color(0x030a14);
+
+    // Pequeño “environment” procedural para reflejos (realismo tipo estudio)
+    const envTex = (() => {
+      const size = 256;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const c = canvas.getContext('2d');
+      const g1 = c.createRadialGradient(size * 0.5, size * 0.4, size * 0.05, size * 0.5, size * 0.5, size * 0.6);
+      g1.addColorStop(0, '#bdf7ff');
+      g1.addColorStop(0.25, '#2fd5ff');
+      g1.addColorStop(0.6, '#0a4a7a');
+      g1.addColorStop(1, '#030a14');
+      c.fillStyle = g1;
+      c.fillRect(0, 0, size, size);
+
+      // streaks suaves
+      c.globalAlpha = 0.16;
+      for (let i = 0; i < 30; i++) {
+        const x = Math.random() * size;
+        const w = 2 + Math.random() * 6;
+        c.fillStyle = 'rgba(0,229,255,0.8)';
+        c.fillRect(x, 0, w, size);
+      }
+      c.globalAlpha = 1;
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      return texture;
+    })();
+
+    scene.environment = envTex;
+    scene.backgroundIntensity = 0.0;
+    scene.fog = new THREE.Fog(0x030a14, 3, 15);
+    
+    camera = new THREE.PerspectiveCamera(48, 2, 0.1, 50);
+    camera.position.set(3.4, 2.8, 6.5);
+    camera.lookAt(0, 0, 0);
+
+    // Iluminación cinematográfica para dar volumen real
+    const ambientLight = new THREE.AmbientLight(0x6aaed6, 0.35);
+    scene.add(ambientLight);
+
+    const hemisphereLight = new THREE.HemisphereLight(0x7fdcff, 0x07111d, 0.8);
+    hemisphereLight.position.set(0, 8, 0);
+    scene.add(hemisphereLight);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    keyLight.position.set(4, 7, 5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.width = 1024;
+    keyLight.shadow.mapSize.height = 1024;
+    keyLight.shadow.camera.near = 1;
+    keyLight.shadow.camera.far = 20;
+    keyLight.shadow.camera.left = -8;
+    keyLight.shadow.camera.right = 8;
+    keyLight.shadow.camera.top = 8;
+    keyLight.shadow.camera.bottom = -8;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.PointLight(0x00e5ff, 1.1, 20, 2);
+    fillLight.position.set(-3, 2, 3);
+    scene.add(fillLight);
+
+    const accentLight = new THREE.PointLight(0xffd60a, 0.8, 18, 2);
+    accentLight.position.set(2.5, 1.5, -2.5);
+    scene.add(accentLight);
+
+    const rimLight = new THREE.SpotLight(0xff3a5e, 1.4, 20, Math.PI / 6, 0.4, 1.2);
+    rimLight.position.set(-2, 6, 5);
+    rimLight.target.position.set(0, 0, 0);
+    rimLight.castShadow = true;
+    scene.add(rimLight);
+    scene.add(rimLight.target);
+
+    // Grupo principal
+    fablabGroup = new THREE.Group();
+    scene.add(fablabGroup);
+
+    const createSolidMaterial = (color, metalness = 0.25, roughness = 0.45, emissive = 0x000000, emissiveIntensity = 0) => new THREE.MeshStandardMaterial({
+      color,
+      metalness,
+      roughness,
+      emissive,
+      emissiveIntensity
+    });
+
+    // ─── PISO DEL FABLAB ───
+    const floorGeo = new THREE.PlaneGeometry(8, 8);
+    const floorMat = new THREE.MeshStandardMaterial({ 
+      color: 0x07131f,
+      metalness: 0.1,
+      roughness: 0.95,
+      transparent: true,
+      opacity: 0.98,
+      side: THREE.DoubleSide
+    });
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -1.5;
+    floor.receiveShadow = true;
+    fablabGroup.add(floor);
+
+    const floorGlowGeo = new THREE.CircleGeometry(3.5, 64);
+    const floorGlowMat = new THREE.MeshBasicMaterial({
+      color: 0x00e5ff,
+      transparent: true,
+      opacity: 0.06,
+      side: THREE.DoubleSide
+    });
+    const floorGlow = new THREE.Mesh(floorGlowGeo, floorGlowMat);
+    floorGlow.rotation.x = -Math.PI / 2;
+    floorGlow.position.y = -1.49;
+    fablabGroup.add(floorGlow);
+
+    // Grid en el piso
+    const gridHelper = new THREE.PolarGridHelper(4, 32, 20, 64, 0x00e5ff, 0x00e5ff);
+    gridHelper.position.y = -1.49;
+    fablabGroup.add(gridHelper);
+
+    // ─── IMPRESORA 3D (CENTRO-IZQUIERDA) ───
+    printerGroup = new THREE.Group();
+    printerGroup.position.set(-2.35, -0.05, 0.2);
+    
+    // Base
+    const baseGeo = new THREE.BoxGeometry(1.45, 0.08, 1.05);
+    const baseMat = createSolidMaterial(0x34404d, 0.35, 0.4);
+    const base = new THREE.Mesh(baseGeo, baseMat);
+    base.castShadow = true;
+    base.receiveShadow = true;
+    printerGroup.add(base);
+    
+    // Marco
+    const frameGeo = new THREE.BoxGeometry(0.92, 1.15, 0.92);
+    const frameMat = createSolidMaterial(0x0b1d2a, 0.18, 0.45, 0x00e5ff, 0.28);
+    const frame = new THREE.Mesh(frameGeo, frameMat);
+    frame.position.y = 0.62;
+    frame.castShadow = true;
+    printerGroup.add(frame);
+
+    const frameTopGeo = new THREE.BoxGeometry(1.0, 0.06, 0.12);
+    const frameTopMat = createSolidMaterial(0x1e3545, 0.25, 0.45, 0x00e5ff, 0.08);
+    const frameTop = new THREE.Mesh(frameTopGeo, frameTopMat);
+    frameTop.position.set(0, 1.18, 0);
+    frameTop.castShadow = true;
+    printerGroup.add(frameTop);
+
+    const railGeo = new THREE.CylinderGeometry(0.025, 0.025, 1.0, 12);
+    const railMat = createSolidMaterial(0xb8c6d4, 0.8, 0.18);
+    const railLeft = new THREE.Mesh(railGeo, railMat);
+    railLeft.rotation.z = Math.PI / 2;
+    railLeft.position.set(0, 0.68, -0.34);
+    railLeft.castShadow = true;
+    printerGroup.add(railLeft);
+    const railRight = railLeft.clone();
+    railRight.position.z = 0.34;
+    printerGroup.add(railRight);
+    
+    // Cama de impresión
+    const bedGeo = new THREE.BoxGeometry(0.72, 0.05, 0.62);
+    const bedMat = createSolidMaterial(0xd9b63a, 0.18, 0.55, 0xffd60a, 0.2);
+    const bed = new THREE.Mesh(bedGeo, bedMat);
+    bed.position.y = 0.15;
+    bed.castShadow = true;
+    bed.receiveShadow = true;
+    printerGroup.add(bed);
+
+    const bedGlassGeo = new THREE.CircleGeometry(0.36, 24);
+    const bedGlassMat = new THREE.MeshBasicMaterial({ color: 0x6ce4ff, transparent: true, opacity: 0.15, side: THREE.DoubleSide });
+    const bedGlass = new THREE.Mesh(bedGlassGeo, bedGlassMat);
+    bedGlass.rotation.x = -Math.PI / 2;
+    bedGlass.position.y = 0.18;
+    printerGroup.add(bedGlass);
+    
+    // Extrusor
+    const extruderGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.24, 12);
+    const extruderMat = createSolidMaterial(0xff4f6d, 0.3, 0.35, 0xff3a5e, 0.2);
+    const extruder = new THREE.Mesh(extruderGeo, extruderMat);
+    extruder.position.set(0, 0.8, 0);
+    extruder.castShadow = true;
+    printerGroup.add(extruder);
+
+    const printerBridgeGeo = new THREE.BoxGeometry(0.55, 0.05, 0.18);
+    const printerBridgeMat = createSolidMaterial(0x1a2733, 0.3, 0.45, 0x00e5ff, 0.08);
+    const printerBridge = new THREE.Mesh(printerBridgeGeo, printerBridgeMat);
+    printerBridge.position.set(0, 0.95, 0);
+    printerBridge.castShadow = true;
+    printerGroup.add(printerBridge);
+    
+    // Filamento (esfera arriba)
+    const filamentGeo = new THREE.SphereGeometry(0.15, 16, 16);
+    const filamentMat = createSolidMaterial(0x15d47a, 0.22, 0.35, 0x00ff88, 0.45);
+    const filament = new THREE.Mesh(filamentGeo, filamentMat);
+    filament.position.y = 1;
+    filament.castShadow = true;
+    printerGroup.add(filament);
+    
+    fablabGroup.add(printerGroup);
+
+    // ─── CORTADORA LÁSER (CENTRO-DERECHA) ───
+    laserGroup = new THREE.Group();
+    laserGroup.position.set(1.35, -0.05, -0.35);
+    
+    const laserBaseGeo = new THREE.BoxGeometry(1.55, 0.58, 1.1);
+    const laserBaseMat = createSolidMaterial(0x3f4557, 0.35, 0.45);
+    const laserBase = new THREE.Mesh(laserBaseGeo, laserBaseMat);
+    laserBase.castShadow = true;
+    laserBase.receiveShadow = true;
+    laserGroup.add(laserBase);
+    
+    // Ventana de la cortadora
+    const windowGeo = new THREE.PlaneGeometry(1.0, 0.38);
+    const windowMat = new THREE.MeshPhysicalMaterial({ 
+      color: 0x192331, 
+      metalness: 0.05,
+      roughness: 0.08,
+      transparent: true,
+      opacity: 0.5,
+      side: THREE.DoubleSide,
+      transmission: 0.25,
+      clearcoat: 0.8,
+      clearcoatRoughness: 0.1
+    });
+    const window = new THREE.Mesh(windowGeo, windowMat);
+    window.position.set(0, 0.08, 0.56);
+    laserGroup.add(window);
+
+    const lidGeo = new THREE.BoxGeometry(1.45, 0.08, 1.02);
+    const lidMat = createSolidMaterial(0x182433, 0.2, 0.3, 0xff3a5e, 0.05);
+    const lid = new THREE.Mesh(lidGeo, lidMat);
+    lid.position.set(0, 0.4, -0.02);
+    lid.castShadow = true;
+    laserGroup.add(lid);
+
+    const laserWindowFrameGeo = new THREE.BoxGeometry(1.07, 0.42, 0.04);
+    const laserWindowFrameMat = createSolidMaterial(0x1f2d3c, 0.22, 0.35, 0x00e5ff, 0.08);
+    const laserWindowFrame = new THREE.Mesh(laserWindowFrameGeo, laserWindowFrameMat);
+    laserWindowFrame.position.set(0, 0.1, 0.53);
+    laserGroup.add(laserWindowFrame);
+    
+    // Láser beam
+    const beamGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.34, 8);
+    const beamMat = createSolidMaterial(0xff2d2d, 0.1, 0.25, 0xff0000, 0.2);
+    const beam = new THREE.Mesh(beamGeo, beamMat);
+    beam.position.set(0, 0.4, 0.32);
+    beam.castShadow = true;
+    laserGroup.add(beam);
+
+    const laserBaseGlow = new THREE.Mesh(
+      new THREE.BoxGeometry(1.52, 0.04, 1.08),
+      new THREE.MeshBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.08 })
+    );
+    laserBaseGlow.position.set(0, -0.28, 0);
+    laserGroup.add(laserBaseGlow);
+    
+    fablabGroup.add(laserGroup);
+
+    // ─── FRESADORA CNC (IZQUIERDA-ATRÁS) ───
+    cncGroup = new THREE.Group();
+    cncGroup.position.set(-1.55, -0.08, -2.0);
+    
+    const cncBaseGeo = new THREE.BoxGeometry(1.15, 0.62, 0.9);
+    const cncBaseMat = createSolidMaterial(0x4d5365, 0.35, 0.5);
+    const cncBase = new THREE.Mesh(cncBaseGeo, cncBaseMat);
+    cncBase.castShadow = true;
+    cncBase.receiveShadow = true;
+    cncGroup.add(cncBase);
+    
+    // Brazo de la CNC
+    const cncGantryGeo = new THREE.BoxGeometry(1.02, 0.08, 0.14);
+    const cncGantryMat = createSolidMaterial(0x94a6b5, 0.55, 0.3);
+    const cncGantry = new THREE.Mesh(cncGantryGeo, cncGantryMat);
+    cncGantry.position.set(0, 0.62, 0);
+    cncGantry.castShadow = true;
+    cncGroup.add(cncGantry);
+
+    const armGeo = new THREE.BoxGeometry(0.12, 0.45, 0.12);
+    const armMat = createSolidMaterial(0x00b4d8, 0.15, 0.35, 0x00b4d8, 0.15);
+    const arm = new THREE.Mesh(armGeo, armMat);
+    arm.position.set(0, 0.52, 0);
+    arm.castShadow = true;
+    cncGroup.add(arm);
+
+    const gantryPostGeo = new THREE.BoxGeometry(0.1, 0.55, 0.1);
+    const gantryPostMat = createSolidMaterial(0x6c7885, 0.4, 0.35);
+    const gantryPostLeft = new THREE.Mesh(gantryPostGeo, gantryPostMat);
+    gantryPostLeft.position.set(-0.42, 0.18, 0);
+    gantryPostLeft.castShadow = true;
+    cncGroup.add(gantryPostLeft);
+    const gantryPostRight = gantryPostLeft.clone();
+    gantryPostRight.position.x = 0.42;
+    cncGroup.add(gantryPostRight);
+    
+    // Broca
+    const drillGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.24, 10);
+    const drillMat = createSolidMaterial(0xb9c3cc, 0.8, 0.2, 0x00e5ff, 0.05);
+    const drill = new THREE.Mesh(drillGeo, drillMat);
+    drill.position.set(0, 0.3, 0);
+    drill.castShadow = true;
+    cncGroup.add(drill);
+
+    const cncBedGeo = new THREE.BoxGeometry(0.7, 0.04, 0.55);
+    const cncBedMat = createSolidMaterial(0x2b3946, 0.3, 0.55);
+    const cncBed = new THREE.Mesh(cncBedGeo, cncBedMat);
+    cncBed.position.set(0, -0.06, 0);
+    cncBed.receiveShadow = true;
+    cncGroup.add(cncBed);
+    
+    fablabGroup.add(cncGroup);
+
+    // ─── BRAZO ROBÓTICO (DERECHA-ATRÁS) ───
+    robotArm = new THREE.Group();
+    robotArm.position.set(2.05, -0.75, -1.45);
+    
+    // Base giratoria
+    const robotBaseGeo = new THREE.CylinderGeometry(0.24, 0.28, 0.32, 18);
+    const robotBaseMat = createSolidMaterial(0x4f5965, 0.5, 0.45);
+    const robotBase = new THREE.Mesh(robotBaseGeo, robotBaseMat);
+    robotBase.castShadow = true;
+    robotArm.add(robotBase);
+    
+    // Brazo 1
+    const arm1Geo = new THREE.BoxGeometry(0.16, 0.62, 0.16);
+    const arm1Mat = createSolidMaterial(0x0ea2b8, 0.35, 0.35, 0x00e5ff, 0.18);
+    const arm1 = new THREE.Mesh(arm1Geo, arm1Mat);
+    arm1.position.y = 0.47;
+    arm1.castShadow = true;
+    robotArm.add(arm1);
+
+    const joint1 = new THREE.Mesh(
+      new THREE.SphereGeometry(0.11, 16, 16),
+      createSolidMaterial(0x6fe7ff, 0.18, 0.25, 0x00e5ff, 0.2)
+    );
+    joint1.position.y = 0.18;
+    robotArm.add(joint1);
+    
+    // Brazo 2
+    const arm2Geo = new THREE.BoxGeometry(0.13, 0.44, 0.13);
+    const arm2Mat = createSolidMaterial(0xd7b22c, 0.4, 0.38, 0xffd60a, 0.15);
+    const arm2 = new THREE.Mesh(arm2Geo, arm2Mat);
+    arm2.position.set(0.12, 0.9, 0);
+    arm2.rotation.z = -0.45;
+    arm2.castShadow = true;
+    robotArm.add(arm2);
+
+    const joint2 = new THREE.Mesh(
+      new THREE.SphereGeometry(0.095, 16, 16),
+      createSolidMaterial(0xffd76d, 0.16, 0.3, 0xffd60a, 0.18)
+    );
+    joint2.position.set(0.06, 0.74, 0);
+    robotArm.add(joint2);
+    
+    // Pinza
+    const gripperGeo = new THREE.BoxGeometry(0.1, 0.18, 0.1);
+    const gripperMat = createSolidMaterial(0xff5a6f, 0.2, 0.3, 0xff3a5e, 0.18);
+    const gripper = new THREE.Mesh(gripperGeo, gripperMat);
+    gripper.position.set(0.22, 1.08, 0);
+    gripper.castShadow = true;
+    robotArm.add(gripper);
+
+    const gripperLeft = new THREE.Mesh(
+      new THREE.BoxGeometry(0.03, 0.16, 0.03),
+      createSolidMaterial(0xff8898, 0.15, 0.35, 0xff3a5e, 0.08)
+    );
+    gripperLeft.position.set(0.25, 1.18, 0.04);
+    robotArm.add(gripperLeft);
+    const gripperRight = gripperLeft.clone();
+    gripperRight.position.z = -0.04;
+    robotArm.add(gripperRight);
+    
+    fablabGroup.add(robotArm);
+
+    // ─── MESA DE TRABAJO (CENTRO) ───
+    const tableGeo = new THREE.BoxGeometry(2.35, 0.08, 1.15);
+    const tableMat = createSolidMaterial(0x3a4250, 0.35, 0.5);
+    const table = new THREE.Mesh(tableGeo, tableMat);
+    table.position.set(0, -0.68, 0.95);
+    table.castShadow = true;
+    table.receiveShadow = true;
+    fablabGroup.add(table);
+    
+    // Patas de la mesa
+    for (let i = -1; i <= 1; i += 2) {
+      for (let j = -1; j <= 1; j += 2) {
+        const legGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.6, 8);
+        const legMat = createSolidMaterial(0x68707c, 0.45, 0.45);
+        const leg = new THREE.Mesh(legGeo, legMat);
+        leg.position.set(i * 1.05, -1, 0.95 + j * 0.48);
+        leg.castShadow = true;
+        fablabGroup.add(leg);
+      }
+    }
+
+    // ─── OBJETOS EN LA MESA ───
+    // Arduino
+    const arduinoGeo = new THREE.BoxGeometry(0.42, 0.05, 0.32);
+    const arduinoMat = createSolidMaterial(0x1665c1, 0.25, 0.4, 0x00b4d8, 0.12);
+    const arduino = new THREE.Mesh(arduinoGeo, arduinoMat);
+    arduino.position.set(-0.48, -0.59, 0.95);
+    arduino.castShadow = true;
+    fablabGroup.add(arduino);
+    
+    // Protoboard
+    const breadboardGeo = new THREE.BoxGeometry(0.34, 0.04, 0.22);
+    const breadboardMat = createSolidMaterial(0xe7eef6, 0.1, 0.8);
+    const breadboard = new THREE.Mesh(breadboardGeo, breadboardMat);
+    breadboard.position.set(0.52, -0.59, 0.95);
+    breadboard.castShadow = true;
+    fablabGroup.add(breadboard);
+
+    const labelA = new THREE.Mesh(
+      new THREE.BoxGeometry(0.18, 0.02, 0.08),
+      createSolidMaterial(0x00e5ff, 0.15, 0.35, 0x00e5ff, 0.1)
+    );
+    labelA.position.set(-0.48, -0.53, 0.95);
+    fablabGroup.add(labelA);
+
+    const labelB = labelA.clone();
+    labelB.position.set(0.52, -0.53, 0.95);
+    labelB.material = createSolidMaterial(0xffd60a, 0.15, 0.35, 0xffd60a, 0.1);
+    fablabGroup.add(labelB);
+
+    // ─── PARTÍCULAS FLOTANTES ───
+    const particlesGeo = new THREE.BufferGeometry();
+    const particlesCount = 200;
+    const posArray = new Float32Array(particlesCount * 3);
+    
+    for (let i = 0; i < particlesCount * 3; i++) {
+      posArray[i] = (Math.random() - 0.5) * 8;
+      // Elevar las partículas
+      if (i % 3 === 1) posArray[i] += 1;
+    }
+    
+    particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    
+    const particlesMat = new THREE.PointsMaterial({
+      size: 0.03,
+      color: 0x00e5ff,
+      transparent: true,
+      opacity: 0.5,
+      blending: THREE.AdditiveBlending
+    });
+    
+    particles = new THREE.Points(particlesGeo, particlesMat);
+    fablabGroup.add(particles);
+
+    // ─── ANILLOS DECORATIVOS ───
+    const ring1Geo = new THREE.TorusGeometry(3, 0.02, 16, 100);
+    const ring1Mat = createSolidMaterial(0x00e5ff, 0.0, 0.3, 0x00e5ff, 0.5);
+    const ring1 = new THREE.Mesh(ring1Geo, ring1Mat);
+    ring1.rotation.x = Math.PI / 2;
+    ring1.position.y = -1.3;
+    fablabGroup.add(ring1);
+
+    const ring2Geo = new THREE.TorusGeometry(3.5, 0.015, 16, 80);
+    const ring2Mat = createSolidMaterial(0xffd60a, 0.0, 0.3, 0xffd60a, 0.35);
+    const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
+    ring2.rotation.x = Math.PI / 3;
+    ring2.position.y = -1.3;
+    fablabGroup.add(ring2);
+
+    return { ring1, ring2 };
+  }
+
+  function startFablab3D() {
+    if (running) return;
+    running = true;
+
+    setStatus('FABLAB 3D Activo · Gira con mouse/touch');
+    
+    arBtn.style.display = 'none';
+    arStopBtn.style.display = '';
+    arCanvas.style.cursor = 'grab';
+
+    if (!renderer) {
+      renderer = new THREE.WebGLRenderer({ 
+        canvas: arCanvas, 
+        alpha: true, 
+        antialias: true 
+      });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      renderer.physicallyCorrectLights = true;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.35;
+      renderer.toneMappingWhitePoint = 1.1;
+    }
+
+    if (!scene) {
+      const built = buildFablabScene();
+    }
+
+    function resize() {
+      const rect = arCanvas.getBoundingClientRect();
+      const w = Math.max(1, Math.floor(rect.width));
+      const h = Math.max(1, Math.floor(rect.height));
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(arCanvas);
+
+    // Mouse/Touch interaction
+    let isDragging = false;
+    let prevMouseX = 0, prevMouseY = 0;
+
+    arCanvas.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      prevMouseX = e.clientX;
+      prevMouseY = e.clientY;
+      arCanvas.style.cursor = 'grabbing';
+    });
+
+    arCanvas.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        const dx = e.clientX - prevMouseX;
+        const dy = e.clientY - prevMouseY;
+        targetRotY += dx * 0.01;
+        targetRotX += dy * 0.01;
+        prevMouseX = e.clientX;
+        prevMouseY = e.clientY;
+      }
+      // Actualizar posición del mouse para hover suave
+      const rect = arCanvas.getBoundingClientRect();
+      mouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouseY = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    });
+
+    arCanvas.addEventListener('mouseup', () => {
+      isDragging = false;
+      arCanvas.style.cursor = 'grab';
+    });
+
+    arCanvas.addEventListener('mouseleave', () => {
+      isDragging = false;
+      arCanvas.style.cursor = 'grab';
+    });
+
+    // Touch support
+    arCanvas.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      prevMouseX = e.touches[0].clientX;
+      prevMouseY = e.touches[0].clientY;
+    });
+
+    arCanvas.addEventListener('touchmove', (e) => {
+      if (isDragging) {
+        const dx = e.touches[0].clientX - prevMouseX;
+        const dy = e.touches[0].clientY - prevMouseY;
+        targetRotY += dx * 0.01;
+        targetRotX += dy * 0.01;
+        prevMouseX = e.touches[0].clientX;
+        prevMouseY = e.touches[0].clientY;
+      }
+    });
+
+    arCanvas.addEventListener('touchend', () => {
+      isDragging = false;
+    });
+
+    // Scroll zoom
+    arCanvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      camera.position.z += e.deltaY * 0.01;
+      camera.position.z = Math.max(3, Math.min(12, camera.position.z));
+    });
+
+    function animate() {
+      animationId = requestAnimationFrame(animate);
+      if (!running) return;
+
+      // Rotación suave
+      fablabGroup.rotation.y += (targetRotY - fablabGroup.rotation.y) * 0.05;
+      fablabGroup.rotation.x += (targetRotX - fablabGroup.rotation.x) * 0.05;
+
+      // Animaciones individuales
+      printerGroup.rotation.y += 0.004;
+      laserGroup.rotation.y += 0.003;
+      cncGroup.rotation.y += 0.0025;
+      if (robotArm.children[1]) robotArm.children[1].rotation.z = Math.sin(Date.now() * 0.002) * 0.2;
+      if (robotArm.children[3]) robotArm.children[3].rotation.z = Math.cos(Date.now() * 0.002) * 0.3;
+      particles.rotation.y += 0.002;
+      particles.rotation.x += 0.001;
+
+      // Movimiento de cámara suave
+      camera.position.x += (mouseX * 2 - camera.position.x) * 0.03;
+      camera.position.y += (mouseY * 1.5 - camera.position.y) * 0.03;
+      camera.lookAt(0, 0, 0);
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  }
+
+  function stopFablab3D() {
+    running = false;
+    setStatus('Detenido');
+    
+    arBtn.style.display = '';
+    arStopBtn.style.display = 'none';
+    arCanvas.style.cursor = 'default';
+
+    if (animationId) cancelAnimationFrame(animationId);
+    animationId = null;
+
+    // Reiniciar rotación
+    targetRotX = 0;
+    targetRotY = 0;
+    if (fablabGroup) {
+      fablabGroup.rotation.set(0, 0, 0);
+    }
+    if (camera) {
+      camera.position.set(3, 2.5, 6);
+      camera.lookAt(0, 0, 0);
+    }
+  }
+
+  if (arBtn) arBtn.addEventListener('click', startFablab3D);
+  if (arStopBtn) arStopBtn.addEventListener('click', stopFablab3D);
+
+  setStatus('Listo · Click en Activar');
+})();
+
+// ─── ICONOS 3D PARA ÁREAS DE FORMACIÓN ───
+(function init3DIcons() {
+  // Configuración de iconos 3D para cada área
+  const areaIcons = [
+    { selector: '.area-card:nth-child(1) .area-icon', geometry: 'torus', color: 0x00e5ff },
+    { selector: '.area-card:nth-child(2) .area-icon', geometry: 'icosahedron', color: 0x0a84ff },
+    { selector: '.area-card:nth-child(3) .area-icon', geometry: 'cylinder', color: 0x00e5ff },
+    { selector: '.area-card:nth-child(4) .area-icon', geometry: 'octahedron', color: 0xff3a5e },
+    { selector: '.area-card:nth-child(5) .area-icon', geometry: 'dodecahedron', color: 0xffd60a },
+    { selector: '.area-card:nth-child(6) .area-icon', geometry: 'cone', color: 0x00b4d8 }
+  ];
+
+  areaIcons.forEach(config => {
+    const container = document.querySelector(config.selector);
+    if (!container) return;
+
+    // Limpiar contenido SVG existente y preparar para 3D
+    const svgEl = container.querySelector('svg');
+    if (svgEl) svgEl.style.display = 'none';
+
+    // Crear escena Three.js
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 10);
+    camera.position.z = 3.5;
+
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer.setSize(52, 52);
+    renderer.setPixelRatio(2);
+    renderer.domElement.style.position = 'absolute';
+    renderer.domElement.style.top = '50%';
+    renderer.domElement.style.left = '50%';
+    renderer.domElement.style.transform = 'translate(-50%, -50%)';
+    renderer.domElement.style.pointerEvents = 'none';
+    container.appendChild(renderer.domElement);
+
+    // Crear geometría 3D
+    let geometry;
+    switch(config.geometry) {
+      case 'torus':
+        geometry = new THREE.TorusGeometry(0.7, 0.25, 16, 32);
+        break;
+      case 'icosahedron':
+        geometry = new THREE.IcosahedronGeometry(0.9, 0);
+        break;
+      case 'cylinder':
+        geometry = new THREE.CylinderGeometry(0.5, 0.5, 1.2, 16);
+        break;
+      case 'octahedron':
+        geometry = new THREE.OctahedronGeometry(0.8);
+        break;
+      case 'dodecahedron':
+        geometry = new THREE.DodecahedronGeometry(0.7);
+        break;
+      case 'cone':
+        geometry = new THREE.ConeGeometry(0.6, 1.2, 8);
+        break;
+      default:
+        geometry = new THREE.SphereGeometry(0.7, 16, 16);
+    }
+
+    const material = new THREE.MeshBasicMaterial({ 
+      color: config.color, 
+      wireframe: true, 
+      transparent: true, 
+      opacity: 0.8 
+    });
+    
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    // Añadir un anillo sutil
+    const ringGeo = new THREE.TorusGeometry(0.9, 0.03, 8, 32);
+    const ringMat = new THREE.MeshBasicMaterial({ 
+      color: 0x00e5ff, 
+      transparent: true, 
+      opacity: 0.3 
+    });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI / 2;
+    scene.add(ring);
+
+    // Animación
+    function animate() {
+      requestAnimationFrame(animate);
+      mesh.rotation.x += 0.01;
+      mesh.rotation.y += 0.015;
+      ring.rotation.z += 0.008;
+      renderer.render(scene, camera);
+    }
+    animate();
+  });
+
+  // También para iconos de salidas profesionales (los emojis los mantenemos pero añadimos efecto 3D)
+  const salidaIcons = document.querySelectorAll('.salida-icon');
+  salidaIcons.forEach(icon => {
+    icon.style.transition = 'transform 0.4s ease';
+    icon.addEventListener('mouseenter', () => {
+      icon.style.transform = 'perspective(800px) rotateX(15deg) rotateY(15deg) scale(1.1)';
+    });
+    icon.addEventListener('mouseleave', () => {
+      icon.style.transform = 'perspective(800px) rotateX(10deg)';
+    });
+  });
+})();
+
+</script>
+</body>
+</html>
